@@ -1068,7 +1068,15 @@ fn link_to_libraries(statik: bool, target_os: &str) {
             println!("cargo:rustc-link-lib={}={}", ffmpeg_ty, lib.name);
         }
     }
-    println!("cargo:rustc-link-arg=-Wl,--no-as-needed");
+    // Keep GNU ld from dropping libraries whose symbols it thinks are unused.
+    // Apple's ld and MSVC's link.exe reject the option and don't drop them
+    // anyway, so skip it there.
+    if !matches!(
+        target_os,
+        "macos" | "ios" | "tvos" | "watchos" | "visionos" | "windows"
+    ) {
+        println!("cargo:rustc-link-arg=-Wl,--no-as-needed");
+    }
     if env::var("CARGO_FEATURE_BUILD_ZLIB").is_ok() && target_os == "linux" {
         println!("cargo:rustc-link-lib=z");
     }
